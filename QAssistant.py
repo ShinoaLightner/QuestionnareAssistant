@@ -16,7 +16,7 @@ class QAssistant(commands.Bot):
         super().__init__(command_prefix="\'\'", intents=disnake.Intents.all())
         self.sqlconnect = None
         self.qmanipulate = None
-        self.cogs_list = []
+        self.cogs_list = ["CommandExt.RulePublish"]
 
     async def setup_hook(self):
         for cog in self.cogs_list:

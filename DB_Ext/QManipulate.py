@@ -6,6 +6,7 @@ import datetime
 import re
 import asyncio
 from disnake.ext import commands
+import EmbedPalette
 
 SAVE_DB_TIME = 300
 
@@ -64,7 +65,7 @@ class QManipulate:
                         embed=disnake.Embed(
                             title="Error: Bad Questionnaire Format!",
                             description=f"{msg.author.mention} reformate this -> {msg.jump_url} moron!",
-                            color=0x0bffca).set_footer(
+                            color=EmbedPalette.WARNING).set_footer(
                             text=f"UTC Time: {datetime.datetime.now()}", icon_url=self.bot.user.avatar.url)
                     )
                     return False
@@ -84,7 +85,7 @@ class QManipulate:
                             embed=disnake.Embed(
                                 title="Error: Bad Questionnaire Format!",
                                 description=f"{msg.author.mention} reformate this -> {msg.jump_url} moron!",
-                                color=0x0bffca).set_footer(
+                                color=EmbedPalette.WARNING).set_footer(
                                 text=f"UTC Time: {datetime.datetime.now()}", icon_url=self.bot.user.avatar.url)
                         )
                         return False
@@ -107,7 +108,7 @@ class QManipulate:
                         embed=disnake.Embed(
                             title="Error: Bad Questionnaire Format!",
                             description=f"{msg.author.mention} reformate this -> {msg.jump_url} moron!\n||{e}||",
-                            color=0x0bffca).set_footer(
+                            color=EmbedPalette.WARNING).set_footer(
                             text=f"UTC Time: {datetime.datetime.now()}", icon_url=self.bot.user.avatar.url)
                     )
                     return False
@@ -119,7 +120,7 @@ class QManipulate:
                 embed=disnake.Embed(
                     title="Error: Bad Questionnaire Format!",
                     description=f"{msg.author.mention} reformate this -> {msg.jump_url} moron!\n||{e}||",
-                    color=0x0bffca).set_footer(
+                    color=EmbedPalette.WARNING).set_footer(
                     text=f"UTC Time: {datetime.datetime.now()}", icon_url=self.bot.user.avatar.url)
             )
             return False
@@ -151,7 +152,7 @@ class QManipulate:
                embed=disnake.Embed(title="Архивация сообщения",
                                    description=f"Анкета пользователя {msg.channel.mention} <@{memid}> заархивирована\n"
                                                f"Ссылка для перехода в архиве: {archive_msg.jump_url}",
-                                   color=0x00ff00).set_footer(
+                                   color=EmbedPalette.SUCCESS).set_footer(
                      text=f"UTC Time: {datetime.datetime.now()}", icon_url=self.bot.user.avatar.url))
         await msg.delete()
 
@@ -173,7 +174,7 @@ class QManipulate:
         await self.logs_chan.send(embed=disnake.Embed(
             title="Сохранение базы данных",
             description=f"База данных успешно сохранена UTC: {datetime.datetime.utcnow()}",
-            color=0x0bffca)
+            color=EmbedPalette.SUCCESS)
         )
 
     async def q_task_check(self):
@@ -203,7 +204,7 @@ class QManipulate:
         await self.logs_chan.send(embed=disnake.Embed(
             title="Проверка базы данных",
             description=f"База данных успешно проверена UTC: {datetime.datetime.utcnow()}",
-            color=0x0bffca)
+            color=EmbedPalette.SUCCESS)
         )
 
     async def q_task(self):

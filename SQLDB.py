@@ -3,7 +3,7 @@ import LogData
 import datetime
 import disnake
 from disnake.ext import commands
-
+import EmbedPalette
 
 class SQLDB:
     def __init__(self, bot: commands.Bot, host: str = LogData.HOST, user: str = LogData.USER,
@@ -56,7 +56,7 @@ class SQLDB:
         except Exception as e:
             self.sqlconnect.rollback()
             await self.logs_chan.send(embed=disnake.Embed(title="Database Error!", description=f"Error: {e}",
-                                                          color=0xff0000).set_footer(
+                                                          color=EmbedPalette.IMPORTANT).set_footer(
                 text=f"UTC Time: {datetime.datetime.now()}", icon_url=self.bot.user.avatar.url))
 
     async def check_questionnare(self, mem_id: int):
@@ -74,7 +74,7 @@ class SQLDB:
         except Exception as e:
             self.sqlconnect.rollback()
             await self.logs_chan.send(embed=disnake.Embed(title="Database Error!", description=f"Error: {e}",
-                                                          color=0xff0000).set_footer(
+                                                          color=EmbedPalette.IMPORTANT).set_footer(
                 text=f"UTC Time: {datetime.datetime.now()}", icon_url=self.bot.user.avatar.url))
 
     async def delete_q_by_msg(self, msg_id: int):
@@ -85,7 +85,7 @@ class SQLDB:
         except Exception as e:
             self.sqlconnect.rollback()
             await self.logs_chan.send(embed=disnake.Embed(title="Database Error!", description=f"Error: {e}",
-                                                          color=0xff0000).set_footer(
+                                                          color=EmbedPalette.IMPORTANT).set_footer(
                 text=f"UTC Time: {datetime.datetime.now()}", icon_url=self.bot.user.avatar.url))
 
     async def update_kinks(self, msg_id: int, prefs: str or bool):
@@ -95,5 +95,5 @@ class SQLDB:
         except Exception as e:
             self.sqlconnect.rollback()
             await self.logs_chan.send(embed=disnake.Embed(title="Database Error!", description=f"Error: {e}",
-                                                          color=0xff0000).set_footer(
+                                                          color=EmbedPalette.IMPORTANT).set_footer(
                 text=f"UTC Time: {datetime.datetime.now()}", icon_url=self.bot.user.avatar.url))
