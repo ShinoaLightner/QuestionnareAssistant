@@ -5,6 +5,7 @@ import disnake
 from disnake.ext import commands
 import EmbedPalette
 
+
 class SQLDB:
     def __init__(self, bot: commands.Bot, host: str = LogData.HOST, user: str = LogData.USER,
                  password: str = LogData.PASSWORD, database: str = LogData.DATABASE):
@@ -25,7 +26,7 @@ class SQLDB:
         self.cursor.execute("SELECT COUNT(*) FROM qList")
         return self.cursor.fetchone()[0]
 
-    async def get_msg_ids(self, mem_id: int = None) -> list[tuple]:
+    async def get_msg_ids(self, mem_id: int = None):
         if mem_id is None:
             self.cursor.execute("SELECT msgID FROM qList")
         else:
