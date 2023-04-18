@@ -58,7 +58,7 @@ class QManipulate:
         try:
             result = [s for s in msg_content if regex.match(s)]
             result = list(filter(lambda x: x.strip() != '' and len(x) > 2
-                                 and re.match('^(?=.*[A-Za-z]).+$|^(?=.*\\d).+$', x), result))
+                                           and re.match('^(?=.*[A-Za-z]).+$|^(?=.*\\d).+$', x), result))
             try:
                 if len(result[0]) < 5:
                     await self.check_chan.send(
@@ -149,11 +149,11 @@ class QManipulate:
             archive_msg = await self.archive_chan.send(content=f'Анкету опубликовал {msg.author.mention}\n{chan_msg}',
                                                        files=files)
         await self.logs_arch_chan.send(
-               embed=disnake.Embed(title="Архивация сообщения",
-                                   description=f"Анкета пользователя {msg.channel.mention} <@{memid}> заархивирована\n"
-                                               f"Ссылка для перехода в архиве: {archive_msg.jump_url}",
-                                   color=EmbedPalette.SUCCESS).set_footer(
-                     text=f"UTC Time: {datetime.datetime.now()}", icon_url=self.bot.user.avatar.url))
+            embed=disnake.Embed(title="Архивация сообщения",
+                                description=f"Анкета пользователя {msg.channel.mention} <@{memid}> заархивирована\n"
+                                            f"Ссылка для перехода в архиве: {archive_msg.jump_url}",
+                                color=EmbedPalette.SUCCESS).set_footer(
+                text=f"UTC Time: {datetime.datetime.now()}", icon_url=self.bot.user.avatar.url))
         await msg.delete()
 
     async def q_task_save(self):
@@ -207,8 +207,31 @@ class QManipulate:
             color=EmbedPalette.SUCCESS)
         )
 
+    async def q_task_check_db(self):
+        rp_hist = await self.bot.get_channel(LogData.Q_RP_CHANELL).history(limit=None).flatten()
+        char_hist = await self.bot.get_channel(LogData.Q_CHAR_CHANELL).history(limit=None).flatten()
+        msg_ids = [msg.id for msg in rp_hist + char_hist]
+        q_dict = await self.sqlconnect.get_qs()
+        for msg in q_dict.items():
+            for m in msg[1]:
+                if m[0] in msg_ids:
+                    continue
+                else:
+                    await self.logs_chan.send(embed=disnake.Embed(
+                        title="Ошибка целостости базы данных",
+                        description=f"Анкета пользователя <@{msg[0]}> удалена из БД!",
+                        color=EmbedPalette.WARNING)
+                    )
+                    await self.sqlconnect.delete_q_by_msg(m[0])
+        await self.logs_chan.send(embed=disnake.Embed(
+            title="Проверка целостности базы данных",
+            description=f"База данных успешно проверена UTC: {datetime.datetime.utcnow()}",
+            color=EmbedPalette.SUCCESS)
+        )
+
     async def q_task(self):
         while True:
             await self.q_task_save()
             await self.q_task_check()
+            await self.q_task_check_db()
             await asyncio.sleep(SAVE_DB_TIME)
