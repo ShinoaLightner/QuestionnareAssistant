@@ -16,9 +16,11 @@ class QAssistant(commands.Bot):
         super().__init__(command_prefix="\'\'", intents=disnake.Intents.all())
         self.sqlconnect = None
         self.qmanipulate = None
-        self.cogs_list = ["CommandExt.RulePublish"]
+        self.cogs_list = ["CommandExt.PublishModule"]
+        self.setup_hook()
+        print(f"{Fore.GREEN}Cogs Loaded!")
 
-    async def setup_hook(self):
+    def setup_hook(self):
         for cog in self.cogs_list:
             self.load_extension(cog)
             print(f"{Fore.GREEN}Loaded {Fore.YELLOW}{cog}")
@@ -31,8 +33,6 @@ class QAssistant(commands.Bot):
         print(f"{Fore.GREEN}Python Version: {Fore.YELLOW}{platform.python_version()}")
         print(f"{Fore.GREEN}Platform: {Fore.YELLOW}{platform.system()} {platform.release()}")
         print(f"{Fore.GREEN}Logged in at: {Fore.YELLOW}{datetime.datetime.now()}")
-        await self.setup_hook()
-        print(f"{Fore.GREEN}Cogs Loaded!")
         print(f"{Fore.GREEN}Connecting to {Fore.YELLOW}SQLDB")
         self.sqlconnect = SQLDB.SQLDB(self)
         print(f"{Fore.GREEN} Getting Channel for {Fore.YELLOW}SQLDB")
