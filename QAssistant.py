@@ -25,6 +25,15 @@ class QAssistant(commands.Bot):
             self.load_extension(cog)
             print(f"{Fore.GREEN}Loaded {Fore.YELLOW}{cog}")
 
+    async def counter_status(self):
+        while True:
+            await self.change_presence(status=disnake.Status.online,
+                                       activity=disnake.Game(name=f"Кол-во анкет: {await self.sqlconnect.q_count()}"))
+            await asyncio.sleep(15)
+            await self.change_presence(status=disnake.Status.online,
+                                       activity=disnake.Game(name=f"qAssistant {BOT_VERSION}"))
+            await asyncio.sleep(5)
+
     async def on_ready(self):
         print(f"{Fore.GREEN}Logged in as {Fore.YELLOW}{self.user.name}#{self.user.discriminator}")
         print(f"{Fore.GREEN}ID: {Fore.YELLOW}{self.user.id}")
@@ -46,13 +55,7 @@ class QAssistant(commands.Bot):
         self.loop.create_task(self.qmanipulate.q_task())
         print(f"{Fore.GREEN}QTask Started!")
         print(f"{Fore.GREEN}Bot is ready! {Fore.YELLOW}{datetime.datetime.now()}")
-        while True:
-            await self.change_presence(status=disnake.Status.online,
-                                       activity=disnake.Game(name=f"Кол-во анкет: {await self.sqlconnect.q_count()}"))
-            await asyncio.sleep(15)
-            await self.change_presence(status=disnake.Status.online,
-                                       activity=disnake.Game(name=f"qAssistant {BOT_VERSION}"))
-            await asyncio.sleep(5)
+        self.loop.create_task(self.counter_status())
 
     # async def on_message_edit(self, before, after):
     #     if before.channel.id == LogData.Q_LOG_CHANELL:
@@ -62,3 +65,4 @@ class QAssistant(commands.Bot):
 if __name__ == "__main__":
     bot = QAssistant()
     bot.run(LogData.TOKEN)
+
