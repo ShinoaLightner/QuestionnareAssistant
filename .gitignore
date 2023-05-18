@@ -1,2 +1,5 @@
 /LogData.py
 debug_*.py
+/CommandExt/PaginatorModule.py
+/CommandExt/TestButton.py
+/Tools/

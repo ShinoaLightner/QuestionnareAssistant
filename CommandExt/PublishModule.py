@@ -3,7 +3,7 @@ import disnake
 from disnake.ext import commands
 import EmbedPalette
 import LogData
-import debug_LogData
+from Decors.PermDecors import *
 
 RULE_LABELS = [
     "[RULES]",
@@ -100,13 +100,13 @@ class RulePublish(commands.Cog):
         elif msg_chan_count < msg_maker_count:
             return 2
 
-    async def send_embed(self, color: hex, channel, title, desc, attach_url):
+    async def send_embed(self, color, channel, title, desc, attach_url):
         await channel.send(embed=disnake.Embed(title=title, description=desc, color=color).set_footer(
             text=f"Утверждено от {datetime.datetime.now().date()}", icon_url=self.guild.icon.url).set_image(
             url=attach_url
         ))
 
-    async def edit_embed(self, color: hex, message, new_title, new_desc, new_attach):
+    async def edit_embed(self, color, message, new_title, new_desc, new_attach):
         await message.edit(embed=disnake.Embed(title=new_title, description=new_desc, color=color
                                                ).set_footer(
             text=f"Утверждено от {datetime.datetime.now().date()}", icon_url=self.guild.icon.url).set_image(
@@ -131,7 +131,7 @@ class RulePublish(commands.Cog):
             return new_title, new_desc, past_title, past_desc
         return new_title, new_desc
 
-    async def mode_zero(self, lable, point_channel_hist_list: list[disnake.Message], length=None):
+    async def mode_zero(self, lable, point_channel_hist_list, length=None):
         color = await self.select_color(lable)
         if not length:
             length = len(point_channel_hist_list)
@@ -150,12 +150,12 @@ class RulePublish(commands.Cog):
             if (past_content != new_content) or (past_attach != new_attach):
                 await self.edit_embed(color, point_channel_hist_list[i], new_title, new_desc, new_attach)
 
-    async def mode_one(self, lable, point_channel_hist_list: list[disnake.Message]):
+    async def mode_one(self, lable, point_channel_hist_list):
         await self.mode_zero(lable, point_channel_hist_list, len(self.rules_maker_chan))
         for i in range(len(self.rules_maker_chan), len(point_channel_hist_list)):
             await point_channel_hist_list[i].delete()
 
-    async def mode_two(self, lable, channel, point_channel_hist_list: list[disnake.Message]):
+    async def mode_two(self, lable, channel, point_channel_hist_list):
         color = await self.select_color(lable)
         await self.mode_zero(lable, point_channel_hist_list)
         attach = self.rules_maker_chan[len(point_channel_hist_list)].attachments
@@ -167,11 +167,11 @@ class RulePublish(commands.Cog):
                 attach = None
             await self.send_embed(color, channel, title, desc, attach)
 
-    @commands.has_permissions(administrator=True)
     @commands.slash_command(
         name="rulepublish",
         description="Публикация/обновление общих правил",
     )
+    @check_permissions("administrator")
     async def rulespublish(self, ctx):
         lable = "[RULES]"
         await self.get_chan_rules()
@@ -186,11 +186,11 @@ class RulePublish(commands.Cog):
         elif mode == 2:
             await self.mode_two(lable, self.rules_chan, self.rules_chan_hist)
 
-    @commands.has_permissions(administrator=True)
     @commands.slash_command(
         name="adminpublish",
         description="Публикация/обновление правил для администраторов",
     )
+    @check_permissions("administrator")
     async def adminrulepublish(self, ctx):
         lable = "[ADMIN RULES]"
         await self.get_chan_admin_rules()
@@ -205,12 +205,12 @@ class RulePublish(commands.Cog):
         elif mode == 2:
             await self.mode_two(lable, self.rules_admin_chan, self.rules_admin_chan_hist)
 
-    @commands.has_permissions(administrator=True)
     @commands.slash_command(
         name="qrules",
         description="Публикация/обновление правил для оформления анкет",
     )
-    async def qrules(self, ctx):
+    @check_permissions("administrator")
+    async def qrules(self, ctx: disnake.ApplicationCommandInteraction):
         lable = "[QUESTIONNAIRE RULES]"
         await self.get_chan_qrules()
         await self.get_maker_msgs(lable)
@@ -224,11 +224,11 @@ class RulePublish(commands.Cog):
         elif mode == 2:
             await self.mode_two(lable, self.qrules, self.qrules_hist)
 
-    @commands.has_permissions(administrator=True)
     @commands.slash_command(
         name="qexample",
         description="Публикация/обновление примера анкеты",
     )
+    @check_permissions("administrator")
     async def qexample(self, ctx):
         lable = "[QUESTIONNAIRE EXAMPLE]"
         await self.get_chan_qexample()
@@ -243,11 +243,11 @@ class RulePublish(commands.Cog):
         elif mode == 2:
             await self.mode_two(lable, self.qrules_example, self.qrules_example_hist)
 
-    @commands.has_permissions(administrator=True)
     @commands.slash_command(
         name="punishpublic",
         description="Публикация/обновление наказаний",
     )
+    @check_permissions("administrator")
     async def punishpublic(self, ctx):
         lable = "[PUNISHMENTS]"
         await self.get_chan_punishment()
@@ -262,11 +262,11 @@ class RulePublish(commands.Cog):
         elif mode == 2:
             await self.mode_two(lable, self.punishment, self.punishment_hist)
 
-    @commands.has_permissions(administrator=True)
     @commands.slash_command(
         name="navpublic",
         description="Публикация/обновление навигации",
     )
+    @check_permissions("administrator")
     async def navpublic(self, ctx):
         lable = "[NAVIGATION]"
         await self.get_chan_navigation()
@@ -281,7 +281,6 @@ class RulePublish(commands.Cog):
         elif mode == 2:
             await self.mode_two(lable, self.navigation, self.navigation_hist)
 
-    @commands.has_permissions(administrator=True)
     @commands.slash_command(
         name="annonce",
         description="Сделать объявление",
@@ -299,14 +298,18 @@ class RulePublish(commands.Cog):
             type=disnake.OptionType.integer
         )]
     )
+    @check_roles(LogData.Q_ADMIN_ROLE, LogData.Q_PRIMIER_ROLE, LogData.Q_ST_MOD_ROLE)
     async def annonce(self, ctx, num):
         channel = self.bot.get_channel(LogData.ANNONCEMENT_CHANNEL)
         maker = self.bot.get_channel(LogData.ANNONCEMENT_MAKER_CHANNEL)
         maker_hist = await maker.history().flatten()
+        isfind = False
         for _ in maker_hist:
             msg_splited = _.content.split('\n')
             if msg_splited[0] == f"[ANNONCEMENT {num}]":
-                attach = _.attachments
+                files = []
+                for file in _.attachments:
+                    files.append(await file.to_file())
                 embed = disnake.Embed(
                     title=msg_splited[3],
                     description=_.content[_.content.find(msg_splited[3]) + len(msg_splited[3]) + 1:],
@@ -316,6 +319,36 @@ class RulePublish(commands.Cog):
                 if msg_splited[1] != "None":
                     mentions = msg_splited[1].replace(', ', '\n')
                 await channel.send(f"{mentions}", embed=embed)
+                await channel.send(files=files)
+                isfind = True
+                break
+        if isfind:
+            await ctx.response.send_message(embed=disnake.Embed(
+                title="Успех!",
+                description="Объявление успешно отправлено!",
+                color=EmbedPalette.SUCCESS
+            ), ephemeral=True, delete_after=20)
+        else:
+            await ctx.response.send_message(embed=disnake.Embed(
+                title="Ошибка!",
+                description="Шаблон не найден!",
+                color=EmbedPalette.IMPORTANT
+            ), ephemeral=True, delete_after=20)
+
+    @commands.slash_command(
+        name="test",
+        description="Тестовая команда",
+    )
+    @check_permissions("administrator")
+    async def test(self, ctx):
+        await ctx.send(embed=disnake.Embed(
+            color=EmbedPalette.SUCCESS,
+            type="image"
+        ).set_image(url="https://imgur.com/7wsMvC8.gif"))
+        await ctx.send(embed=disnake.Embed(
+            color=EmbedPalette.SUCCESS,
+            type="gifv"
+        ).set_image(url="https://imgur.com/7wsMvC8.gif"))
 
 
 def setup(bot) -> None:

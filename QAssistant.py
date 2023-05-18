@@ -8,7 +8,7 @@ import LogData
 import SQLDB
 from DB_Ext.QManipulate import QManipulate
 
-BOT_VERSION = "0.3a"
+BOT_VERSION = "0.4"
 
 
 class QAssistant(commands.Bot):
@@ -16,7 +16,7 @@ class QAssistant(commands.Bot):
         super().__init__(command_prefix="\'\'", intents=disnake.Intents.all())
         self.sqlconnect = None
         self.qmanipulate = None
-        self.cogs_list = ["CommandExt.PublishModule"]
+        self.cogs_list = ["CommandExt.PublishModule", "CommandExt.TestButton"]
         self.setup_hook()
         print(f"{Fore.GREEN}Cogs Loaded!")
 
