@@ -1,4 +1,3 @@
-import mysql.connector
 import sqlite3
 import LogData
 import datetime
@@ -8,16 +7,10 @@ import EmbedPalette
 
 
 class SQLDB:
-    def __init__(self, bot: commands.Bot, host: str = LogData.HOST, user: str = LogData.USER,
-                 password: str = LogData.PASSWORD, database: str = LogData.DATABASE):
+    def __init__(self, bot: commands.Bot, db: str = LogData.DB):
         self.bot = bot
         self.logs_chan = None
-        self.sqlconnect = mysql.connector.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database
-        )
+        self.sqlconnect = sqlite3.connect(db)
         self.cursor = self.sqlconnect.cursor()
         self.cursor.execute("PRAGMA foreign_keys = ON")
 
@@ -71,8 +64,6 @@ class SQLDB:
             self.cursor.execute(f"SELECT msgID FROM qList WHERE memID = {mem_id}")
             msg_id = self.cursor.fetchall()
             self.cursor.execute(f"DELETE FROM qList WHERE memID = {mem_id}")
-            for msg in msg_id:
-                self.cursor.execute(f"DELETE FROM qKinks WHERE msgID = {msg[0]}")
             self.sqlconnect.commit()
         except Exception as e:
             self.sqlconnect.rollback()
