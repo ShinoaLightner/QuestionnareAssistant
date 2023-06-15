@@ -1,4 +1,5 @@
 import mysql.connector
+import sqlite3
 import LogData
 import datetime
 import disnake
@@ -18,6 +19,7 @@ class SQLDB:
             database=database
         )
         self.cursor = self.sqlconnect.cursor()
+        self.cursor.execute("PRAGMA foreign_keys = ON")
 
     async def get_chan(self):
         self.logs_chan = self.bot.get_channel(LogData.Q_LOG_CHANELL)
