@@ -1,4 +1,4 @@
-import sqlite3
+import mysql.connector
 import LogData
 import datetime
 import disnake
@@ -7,12 +7,17 @@ import EmbedPalette
 
 
 class SQLDB:
-    def __init__(self, bot: commands.Bot, db: str = LogData.DB):
+    def __init__(self, bot: commands.Bot, host: str = LogData.HOST, user: str = LogData.USER,
+                 password: str = LogData.PASSWORD, database: str = LogData.DATABASE):
         self.bot = bot
         self.logs_chan = None
-        self.sqlconnect = sqlite3.connect(db)
+        self.sqlconnect = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=database
+        )
         self.cursor = self.sqlconnect.cursor()
-        self.cursor.execute("PRAGMA foreign_keys = ON")
 
     async def get_chan(self):
         self.logs_chan = self.bot.get_channel(LogData.Q_LOG_CHANELL)

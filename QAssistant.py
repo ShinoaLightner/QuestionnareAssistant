@@ -2,21 +2,22 @@ import asyncio
 import datetime
 import platform
 import disnake
-from disnake.ext import commands
+from disnake.ext import commands, tasks
 from colorama import Fore
 import LogData
 import SQLDB
 from DB_Ext.QManipulate import QManipulate
 
-BOT_VERSION = "0.4"
+BOT_VERSION = "0.6"
 
 
 class QAssistant(commands.Bot):
     def __init__(self):
-        super().__init__(command_prefix="\'\'", intents=disnake.Intents.all())
+        super().__init__(command_prefix="\'\'", intents=disnake.Intents.all(), status=disnake.Status.online)
         self.sqlconnect = None
         self.qmanipulate = None
-        self.cogs_list = ["CommandExt.PublishModule", "CommandExt.TestButton"]
+        self.cogs_list = ["CommandExt.PublishModule"]
+        self.q_task = None
         self.setup_hook()
         print(f"{Fore.GREEN}Cogs Loaded!")
 
@@ -25,14 +26,14 @@ class QAssistant(commands.Bot):
             self.load_extension(cog)
             print(f"{Fore.GREEN}Loaded {Fore.YELLOW}{cog}")
 
+    @tasks.loop(seconds=45)
     async def counter_status(self):
-        while True:
-            await self.change_presence(status=disnake.Status.online,
-                                       activity=disnake.Game(name=f"Кол-во анкет: {await self.sqlconnect.q_count()}"))
-            await asyncio.sleep(15)
-            await self.change_presence(status=disnake.Status.online,
-                                       activity=disnake.Game(name=f"qAssistant {BOT_VERSION}"))
-            await asyncio.sleep(5)
+        try:
+            await self.change_presence(activity=disnake.Game(name=f"Кол-во анкет: {await self.sqlconnect.q_count()}"))
+            await asyncio.sleep(30)
+            await self.change_presence(activity=disnake.Game(name=f"qAssistant {BOT_VERSION}"))
+        except ConnectionResetError:
+            print("Connection Reser Error: Restart a loop, check a bot!")
 
     async def on_ready(self):
         print(f"{Fore.GREEN}Logged in as {Fore.YELLOW}{self.user.name}#{self.user.discriminator}")
@@ -52,14 +53,12 @@ class QAssistant(commands.Bot):
         print(f"{Fore.GREEN} Getting Channel for {Fore.YELLOW}QManipulate")
         await self.qmanipulate.get_chan()
         print(f"{Fore.GREEN}Connected to {Fore.YELLOW}QManipulate")
-        self.loop.create_task(self.qmanipulate.q_task())
+        if not self.q_task:
+            self.q_task = self.loop.create_task(self.qmanipulate.q_task())
         print(f"{Fore.GREEN}QTask Started!")
         print(f"{Fore.GREEN}Bot is ready! {Fore.YELLOW}{datetime.datetime.now()}")
-        self.loop.create_task(self.counter_status())
-
-    # async def on_message_edit(self, before, after):
-    #     if before.channel.id == LogData.Q_LOG_CHANELL:
-    #         pass
+        if not self.counter_status.is_running():
+            self.counter_status.start()
 
 
 if __name__ == "__main__":

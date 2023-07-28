@@ -4,3 +4,5 @@ debug_*.py
 /CommandExt/TestButton.py
 /Tools/
 /DB
+.idea
+__pycache__
