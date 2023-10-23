@@ -336,19 +336,17 @@ class RulePublish(commands.Cog):
             ), ephemeral=True, delete_after=20)
 
     @commands.slash_command(
-        name="test",
-        description="Тестовая команда",
+        name="kink",
+        description="Получить информацию о кинк-листах",
     )
-    @check_permissions("administrator")
-    async def test(self, ctx):
-        await ctx.send(embed=disnake.Embed(
-            color=EmbedPalette.SUCCESS,
-            type="image"
-        ).set_image(url="https://imgur.com/7wsMvC8.gif"))
-        await ctx.send(embed=disnake.Embed(
-            color=EmbedPalette.SUCCESS,
-            type="gifv"
-        ).set_image(url="https://imgur.com/7wsMvC8.gif"))
+    async def kink(self, ctx):
+        await ctx.response.send_message(embed=disnake.Embed(
+            title="KinkList",
+            description="Вот для вас ссылка на наш KinkList:\n"
+                        "https://artoriadiscord.github.io/ERPFinderKinkList/main.html\n\n"
+                        "Мы уже ждём чтобы увидеть вашу потрясающую анкету, как можно скорее! Удачи!",
+            color=EmbedPalette.SUCCESS
+        ), ephemeral=True, delete_after=180)
 
 
 def setup(bot) -> None:

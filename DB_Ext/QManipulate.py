@@ -1,20 +1,20 @@
 import io
 import disnake
 import LogData
-import SQLDB
+from SQLDB import SQLDB
 import datetime
 import re
 import asyncio
 from disnake.ext import commands
 import EmbedPalette
+from Decors.QManipulateExcDecor import LoopException
 
-SAVE_DB_TIME = 300
+SAVE_DB_TIME = 120
 
 
 class QManipulate:
-    def __init__(self, bot: commands.Bot, sqlconnect: SQLDB.SQLDB):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.sqlconnect = sqlconnect
         self.rp_hist = []
         self.char_hist = []
         self.char_chan = None
@@ -24,6 +24,7 @@ class QManipulate:
         self.logs_arch_chan = None
         self.archive_chan = None
         self.guild = None
+        self.qcount = 0
 
     async def get_chan(self):
         self.check_chan = self.bot.get_channel(LogData.Q_CHECK_CHANNEL)
@@ -58,7 +59,7 @@ class QManipulate:
         try:
             result = [s for s in msg_content if regex.match(s)]
             result = list(filter(lambda x: x.strip() != '' and len(x) > 2
-                                           and re.match('^(?=.*[A-Za-z]).+$|^(?=.*\\d).+$', x), result))
+                                 and re.match('^(?=.*[A-Za-z]).+$|^(?=.*\\d).+$', x), result))
             try:
                 if len(result[0]) < 5:
                     await self.check_chan.send(
@@ -156,33 +157,33 @@ class QManipulate:
                 text=f"UTC Time: {datetime.datetime.now()}", icon_url=self.bot.user.avatar.url))
         await msg.delete()
 
-    async def q_task_save(self):
+    async def q_task_save(self, db):
         self.rp_hist = await self.bot.get_channel(LogData.Q_RP_CHANELL).history(limit=None).flatten()
         self.char_hist = await self.bot.get_channel(LogData.Q_CHAR_CHANELL).history(limit=None).flatten()
-        msg_ids = [_[0] for _ in await self.sqlconnect.get_msg_ids()]
+        msg_ids = [_[0] for _ in await db.get_msg_ids()]
         for msg in self.rp_hist:
             if msg.id not in msg_ids:
                 mention = await self.mention_slicer(msg.content)
-                await self.sqlconnect.save_questionnare(await self.get_nickname(mention),
-                                                        mention, msg.id, await self.prefs_slicer(msg))
+                await db.save_questionnare(await self.get_nickname(mention),
+                                           mention, msg.id, await self.prefs_slicer(msg))
 
         for msg in self.char_hist:
             if msg.id not in msg_ids:
                 mention = await self.mention_slicer(msg.content)
-                await self.sqlconnect.save_questionnare(await self.get_nickname(mention), mention, msg.id,
-                                                        await self.prefs_slicer(msg), True)
+                await db.save_questionnare(await self.get_nickname(mention), mention, msg.id,
+                                           await self.prefs_slicer(msg), True)
         await self.logs_chan.send(embed=disnake.Embed(
             title="Сохранение базы данных",
             description=f"База данных успешно сохранена UTC: {datetime.datetime.utcnow()}",
             color=EmbedPalette.SUCCESS)
         )
 
-    async def q_task_check(self):
-        q_dict = await self.sqlconnect.get_qs()
+    async def q_task_check(self, db):
+        q_dict = await db.get_qs()
         mem_with_role = [_.id for _ in self.guild.get_role(LogData.Q_MEMBER_ROLE).members]
         for qd_item in q_dict.items():
             if qd_item[0] not in mem_with_role:
-                await self.sqlconnect.delete_q_by_mem(qd_item[0])
+                await db.delete_q_by_mem(qd_item[0])
                 await self.logs_chan.send(embed=disnake.Embed(
                     title="Удаление ливнувшего/без роли пользователя",
                     description=f"Пользователь <@{qd_item[0]}> был удален из базы данных",
@@ -207,11 +208,11 @@ class QManipulate:
             color=EmbedPalette.SUCCESS)
         )
 
-    async def q_task_check_db(self):
+    async def q_task_check_db(self, db):
         rp_hist = await self.bot.get_channel(LogData.Q_RP_CHANELL).history(limit=None).flatten()
         char_hist = await self.bot.get_channel(LogData.Q_CHAR_CHANELL).history(limit=None).flatten()
         msg_ids = [msg.id for msg in rp_hist + char_hist]
-        q_dict = await self.sqlconnect.get_qs()
+        q_dict = await db.get_qs()
         for msg in q_dict.items():
             for m in msg[1]:
                 if m[0] in msg_ids:
@@ -222,16 +223,19 @@ class QManipulate:
                         description=f"Анкета пользователя <@{msg[0]}> удалена из БД!",
                         color=EmbedPalette.WARNING)
                     )
-                    await self.sqlconnect.delete_q_by_msg(m[0])
+                    await db.delete_q_by_msg(m[0])
         await self.logs_chan.send(embed=disnake.Embed(
             title="Проверка целостности базы данных",
             description=f"База данных успешно проверена UTC: {datetime.datetime.utcnow()}",
             color=EmbedPalette.SUCCESS)
         )
 
+    @LoopException()
     async def q_task(self):
         while True:
-            await self.q_task_save()
-            await self.q_task_check()
-            await self.q_task_check_db()
-            await asyncio.sleep(SAVE_DB_TIME)
+            async with SQLDB(self.bot) as db:
+                await self.q_task_save(db)
+                await self.q_task_check(db)
+                await self.q_task_check_db(db)
+                self.qcount = await db.q_count()
+                await asyncio.sleep(SAVE_DB_TIME)

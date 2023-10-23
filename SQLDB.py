@@ -11,13 +11,35 @@ class SQLDB:
                  password: str = LogData.PASSWORD, database: str = LogData.DATABASE):
         self.bot = bot
         self.logs_chan = None
+        self.host = host
+        self.user = user
+        self.password = password
+        self.database = database
+        self.sqlconnect = None
+        self.cursor = None
+
+    async def __aenter__(self):
+        await self._create_connection()
+        await self.get_chan()
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self._close_connection()
+
+    async def _create_connection(self):
         self.sqlconnect = mysql.connector.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database
+            host=self.host,
+            user=self.user,
+            password=self.password,
+            database=self.database
         )
         self.cursor = self.sqlconnect.cursor()
+
+    async def _close_connection(self):
+        if self.cursor:
+            self.cursor.close()
+        if self.sqlconnect:
+            self.sqlconnect.close()
 
     async def get_chan(self):
         self.logs_chan = self.bot.get_channel(LogData.Q_LOG_CHANELL)
@@ -52,7 +74,7 @@ class SQLDB:
                 self.cursor.execute("INSERT INTO qKinks (msgID, kinkStr, isChara) "
                                     f"VALUES ({msg_id}, \"{prefs}\", {is_chara})")
             else:
-                self.cursor.execute(f"INSERT INTO qKinks (msg_id, isChara) VALUES ({msg_id}, {is_chara})")
+                self.cursor.execute(f"INSERT INTO qKinks (msgID, isChara) VALUES ({msg_id}, {is_chara})")
             self.sqlconnect.commit()
         except Exception as e:
             self.sqlconnect.rollback()
@@ -66,8 +88,6 @@ class SQLDB:
 
     async def delete_q_by_mem(self, mem_id: int):
         try:
-            self.cursor.execute(f"SELECT msgID FROM qList WHERE memID = {mem_id}")
-            msg_id = self.cursor.fetchall()
             self.cursor.execute(f"DELETE FROM qList WHERE memID = {mem_id}")
             self.sqlconnect.commit()
         except Exception as e:
@@ -79,7 +99,6 @@ class SQLDB:
     async def delete_q_by_msg(self, msg_id: int):
         try:
             self.cursor.execute(f"DELETE FROM qList WHERE msgID={msg_id}")
-            self.cursor.execute(f"DELETE FROM qKinks WHERE msgID={msg_id}")
             self.sqlconnect.commit()
         except Exception as e:
             self.sqlconnect.rollback()
@@ -96,3 +115,4 @@ class SQLDB:
             await self.logs_chan.send(embed=disnake.Embed(title="Database Error!", description=f"Error: {e}",
                                                           color=EmbedPalette.IMPORTANT).set_footer(
                 text=f"UTC Time: {datetime.datetime.now()}", icon_url=self.bot.user.avatar.url))
+
